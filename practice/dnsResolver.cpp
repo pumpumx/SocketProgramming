@@ -11,8 +11,8 @@ using namespace std;
 int main(int argc , char * argv[]){ //argc gives the number of arguments provided
     if(argc != 2){
         cerr<<"Usage : showIp www.hostname.com"<<endl;
+        exit(1);
     }   
-    exit(1);
 
     struct sockaddr_storage their_addr;
     socklen_t addr_size;
@@ -20,7 +20,7 @@ int main(int argc , char * argv[]){ //argc gives the number of arguments provide
     
     memset(&hints , 0 , sizeof hints); //empties the hints struct completly
     hints.ai_family = AF_UNSPEC;
-    hints.ai_protocol = SOCK_STREAM;
+    hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; //Fills the host ip automatically 
 
     int status; 
@@ -55,4 +55,8 @@ int main(int argc , char * argv[]){ //argc gives the number of arguments provide
 
     //Now as the socket is successfully binded , we can connect it. 
     connect(sockFd , res->ai_addr , res->ai_addrlen); //return -1 on error.
+    string msg = "yoo nigaaa"; 
+
+    send(sockFd , msg.c_str() ,sizeof msg ,0);
+
 }
