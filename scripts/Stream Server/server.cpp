@@ -8,10 +8,11 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <cstring>
+#include <errno.h>
 
 using namespace std;
 
-#define PORT "3490"
+#define PORT "3490" //Default port , change if you want to change port
 #define BACKLOG 10
 
 void sigchld_handler(int s){
@@ -36,10 +37,7 @@ void *getIpVersion(struct sockaddr *sa){ //crazy concept of generic pointer , do
 }
 
 int main(int argc , char* argv[]){
-    if(argc != 3){
-        cerr<<"usage: telnet remotehostname portname"<<endl;
-        exit(1);
-    }
+
     int sockFd  , newFd;
     struct addrinfo hints , *servInfo , *p;
     memset(&hints , 0 , sizeof hints);
@@ -62,31 +60,34 @@ int main(int argc , char* argv[]){
 
     for(p=servInfo;p != nullptr ; p = p->ai_next){
         if((sockFd = socket(p->ai_family , p->ai_socktype , p->ai_protocol)) == -1){
-            cerr<<"server: "<<sockFd<<endl;
+            cerr<<"Error while binding socket"<<endl;
+            perror("bind"); 
             continue;
         }
 
         if(setsockopt(sockFd , SOL_SOCKET ,SO_REUSEADDR , &yes , sizeof(int)) == -1){
-            cerr<<"Error while setting socket options<<endl";
+            cerr<<"Error while setting socket options"<<endl;
+            continue;
+        }
+        if(bind(sockFd , p->ai_addr , p->ai_addrlen) == -1){
+            cerr<<"Error while binding socket: "<<endl;
+            perror("bind");
             continue;
         }
 
-        if(bind(sockFd , p->ai_addr , p->ai_addrlen) == -1){
-            cerr<<"Error while binding socket: "<<endl;
-            continue;
-        }
         break;
     }
 
     freeaddrinfo(servInfo);
 
     if(p == NULL){
-        cerr<<"Server failed to bind";
+        cerr<<"Server failed to bind"<<endl;
+        perror("bind");
         exit(1);
     }
 
     if(listen(sockFd , BACKLOG) == -1){
-        cout<<"Error while listening on port: "<<PORT;
+        cerr<<"Error while listening on port: "<<PORT<<endl;
         exit(1);
     }
 
@@ -101,6 +102,7 @@ int main(int argc , char* argv[]){
     }
 
     while(1){ //Main accept loop
+        cout<<"Started Accepting Client"<<endl;
         their_size = sizeof their_addr;
         newFd = accept(sockFd , (struct sockaddr *)&their_addr,&their_size);
 
@@ -114,7 +116,7 @@ int main(int argc , char* argv[]){
 
         if(!fork()){ //This is the child process
             close(sockFd);  //child process dosen't need listening socket 
-            if(send(newFd , "Hello My friend" , 16 , 0) == -1){ //Sends the client the hello world message
+            if(send(newFd , "Hello My friend" , strlen("Hello My friend") , 0) == -1){ //Sends the client the hello world message
                 cerr<<"Failed to send the message to the client: "<<s<<endl;
             }
             close(newFd);
@@ -124,6 +126,4 @@ int main(int argc , char* argv[]){
     }
 
     return 0;
-
-
 }

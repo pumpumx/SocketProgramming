@@ -9,8 +9,6 @@
 using namespace std;
 
 
-
-
 int connectToServer(struct addrinfo *&servInfo){ 
         struct addrinfo hints;
         int status;
@@ -24,7 +22,7 @@ int connectToServer(struct addrinfo *&servInfo){
         }
 
         //if successful then the servInfo pointer points to a linked list which contains the available socket address.
-        
+
         return 0;
 }
 
